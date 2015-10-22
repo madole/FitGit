@@ -1,8 +1,8 @@
 {
   "name": "fitgit",
   "main": "./lib/fitgit",
-  "version": "0.0.0",
-  "description": "A short description of your package",
+  "version": "0.0.1",
+  "description": "A suite of metrics for your atom editor",
   "keywords": [],
   "activationCommands": {
     "atom-workspace": "fitgit:toggle"

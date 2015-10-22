@@ -10,6 +10,7 @@ createDiv = -> document.createElement('div')
 class FitgitView
     POMODORO_MAX_DURATION: 1
     POMODORO_INTERVAL: 1000
+    HEATMAP_VALUE: 3
 
     constructor: (serializedState) ->
         # Create Heatmap Element and put it on body
@@ -117,7 +118,7 @@ class FitgitView
         @pomodoroContainer.appendChild(@pomodoroGague)
 
         @pomodoroButton = document.createElement('button')
-        @pomodoroButton.classList.add('pomodoro__button', 'fitgit-text')
+        @pomodoroButton.classList.add('pomodoro__button', 'fitgit-text', 'fitgit-button')
         @pomodoroButton.textContent = 'Start pomodoro'
         @pomodoroButton.onclick = @showPomodoroGague
         @pomodoroContainer.appendChild(@pomodoroButton)
@@ -127,7 +128,7 @@ class FitgitView
         @element.appendChild(@heatmapToggleContainer)
 
         @heatmapToggleButton = document.createElement('button')
-        @heatmapToggleButton.classList.add('heatmap-toggle__button', 'fitgit-text')
+        @heatmapToggleButton.classList.add('heatmap-toggle__button', 'fitgit-text', 'fitgit-button')
         @heatmapToggleButton.textContent = 'Show Clicks Heatmap'
         @heatmapToggleButton.onclick = @setUpHeatMap
         @heatmapToggleContainer.appendChild(@heatmapToggleButton)
@@ -157,22 +158,32 @@ class FitgitView
              )
         mouseClicks = dataStore.getMouseClicks()
 
-        mouseClicks.forEach (data) =>
-            @heatmapInstance.addData
+        #map mouseclicks to heatmapData format
+        heatmapData = mouseClicks.map (data) =>
                 x: data.x
                 y: data.y
-                value: 3
+                value: @HEATMAP_VALUE
 
+        @heatmapInstance.setData {data: heatmapData}
         @heatmapContainerWrapper.classList.remove('hide')
 
 
         @heatmapToggleButton.textContent = 'Hide Clicks Heatmap'
         @heatmapToggleButton.onclick = @hideHeatmap
 
+        $(window).on dataStore.INCREMENT_MOUSE_CLICKS, @addToHeatmap
+
+    addToHeatmap: ({clickPos}) =>
+        @heatmapInstance.addData
+            x: clickPos.x
+            y: clickPos.y
+            value: @HEATMAP_VALUE
+
     hideHeatmap: =>
         @heatmapToggleButton.textContent = 'Show Clicks Heatmap'
         @heatmapToggleButton.onclick = @setUpHeatMap
         @heatmapContainerWrapper.classList.add('hide')
+        $(window).off dataStore.INCREMENT_MOUSE_CLICKS, @addToHeatmap
         # @heatmapContainerWrapper.onmousemove = (e) ->
         #     e.preventDefault();
         #     x = e.layerX;
