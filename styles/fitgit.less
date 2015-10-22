@@ -3,13 +3,12 @@
 // See https://github.com/atom/atom-dark-ui/blob/master/styles/ui-variables.less
 // for a full listing of what's available.
 @import "ui-variables";
-@import "./c3.css";
 
 @text-color: rgb(59, 67, 68);
 @background-color: rgb(255, 255, 255);
 @fontSizeLabel: 30px;
 
-.panel-right {
+atom-panel.right {
     overflow-y: scroll;
 }
 .fitgit {
@@ -36,4 +35,30 @@
 .img__container {
     max-width: 500px;
     max-height: 200px;
+}
+
+.pomodoro__button {
+    margin: 0 auto;
+    display: inherit;
+    border-radius: 20px;
+}
+
+.pomodoro__container {
+    transition-duration: .5s;
+}
+.heatmap__container {
+    height: 100%;
+    width: 100%;
+}
+.heatmap__wrapper {
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    z-index: 1000;
+    opacity: 0.3;
+    pointer-events: none;
+}
+
+.hide {
+    display: none;
 }

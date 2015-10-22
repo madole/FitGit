@@ -1,12 +1,29 @@
 require './thirdparty/d3'
+heatmap = require './thirdparty/heatmap'
 c3 = require './thirdparty/c3'
 dataStore = require './data-store'
+$ = require 'jquery'
 
 
 createDiv = -> document.createElement('div')
 
 class FitgitView
+    POMODORO_MAX_DURATION: 1
+    POMODORO_INTERVAL: 1000
+
     constructor: (serializedState) ->
+        # Create Heatmap Element and put it on body
+
+        @heatmapContainerWrapper = createDiv()
+        @heatmapContainerWrapper.classList.add('heatmap__wrapper')
+        body = document.body.insertBefore(@heatmapContainerWrapper, document.body.firstChild)
+
+        @heatmapContainer = createDiv()
+        @heatmapContainer.id = 'heatmap__container'
+        @heatmapContainer.classList.add('heatmap__container')
+        @heatmapContainerWrapper.appendChild(@heatmapContainer)
+
+
         # Create root element
         @element = document.createElement('div')
         @element.classList.add('fitgit')
@@ -38,7 +55,7 @@ class FitgitView
 
         @lettersLabel = createDiv()
         @lettersLabel.classList.add('letters-chart__label', 'fitgit-text')
-        @lettersLabel.textContent = 'Characters Typed Today'
+        @lettersLabel.textContent = 'No characters Typed Today'
         @lettersChartContainer.appendChild(@lettersLabel)
 
         @lettersChart = createDiv()
@@ -89,6 +106,33 @@ class FitgitView
         @scatterGraphData1 = ['clicks_x']
         @scatterGraphData2 = ['clicks']
 
+        # Set up pomodoro gague
+        @pomodoroContainer = createDiv()
+        @pomodoroContainer.classList.add('pomodoro__container', 'container')
+        @element.appendChild(@pomodoroContainer)
+
+        @pomodoroGague = createDiv()
+        @pomodoroGague.id = 'pomodoro-gague'
+        @pomodoroGague.classList.add('pomodoro-gague')
+        @pomodoroContainer.appendChild(@pomodoroGague)
+
+        @pomodoroButton = document.createElement('button')
+        @pomodoroButton.classList.add('pomodoro__button', 'fitgit-text')
+        @pomodoroButton.textContent = 'Start pomodoro'
+        @pomodoroButton.onclick = @showPomodoroGague
+        @pomodoroContainer.appendChild(@pomodoroButton)
+
+        @heatmapToggleContainer = createDiv()
+        @heatmapToggleContainer.classList.add('heatmap-toggle__container', 'container')
+        @element.appendChild(@heatmapToggleContainer)
+
+        @heatmapToggleButton = document.createElement('button')
+        @heatmapToggleButton.classList.add('heatmap-toggle__button', 'fitgit-text')
+        @heatmapToggleButton.textContent = 'Show Clicks Heatmap'
+        @heatmapToggleButton.onclick = @setUpHeatMap
+        @heatmapToggleContainer.appendChild(@heatmapToggleButton)
+
+
 
     # Returns an object that can be retrieved when package is activated
     serialize: ->
@@ -101,6 +145,73 @@ class FitgitView
     getElement: ->
         @element
 
+
+    setUpHeatMap: =>
+        unless @heatmapInstance
+            @heatmapInstance = heatmap.create(
+                  container: @heatmapContainer
+                  maxOpacity: .6
+                  radius: 50
+                  blur: .90
+                  backgroundColor: 'rgba(0, 0, 58, 0.96)'
+             )
+        mouseClicks = dataStore.getMouseClicks()
+
+        mouseClicks.forEach (data) =>
+            @heatmapInstance.addData
+                x: data.x
+                y: data.y
+                value: 3
+
+        @heatmapContainerWrapper.classList.remove('hide')
+
+
+        @heatmapToggleButton.textContent = 'Hide Clicks Heatmap'
+        @heatmapToggleButton.onclick = @hideHeatmap
+
+    hideHeatmap: =>
+        @heatmapToggleButton.textContent = 'Show Clicks Heatmap'
+        @heatmapToggleButton.onclick = @setUpHeatMap
+        @heatmapContainerWrapper.classList.add('hide')
+        # @heatmapContainerWrapper.onmousemove = (e) ->
+        #     e.preventDefault();
+        #     x = e.layerX;
+        #     y = e.layerY;
+        #     if (e.touches)
+        #         x = e.touches[0].pageX;
+        #         y = e.touches[0].pageY;
+        #
+        #
+        #     heatmapInstance.addData({ x: x, y: y, value: 1 })
+        #
+        # @heatmapContainerWrapper.onclick = (e) ->
+        #     x = e.layerX;
+        #     y = e.layerY;
+        #     heatmapInstance.addData({ x: x, y: y, value: 1 });
+
+
+    showPomodoroGague: =>
+        minutes = ['minutes', 0]
+        unless @pomodoroTimer
+            @pomodoroTimer = c3.generate
+                bindto: '#pomodoro-gague'
+                data:
+                    type: 'gauge'
+                    columns: [
+                        minutes
+                    ]
+                color:
+                    pattern: ['#FF0000', '#F97600', '#F6C600', '#60B044']
+                    threshold:
+                        values: [0.35, 0.70, 1]
+                gauge:
+                    max: @POMODORO_MAX_DURATION
+        else
+            @pomodoroTimer.load
+                data:
+                    columns: minutes
+
+        @kickOffPomodoroTimer()
 
     showClickScatterGraph: ->
         @scatterGraph = c3.generate
@@ -153,6 +264,11 @@ class FitgitView
 
     updateLettersChart: ->
         newCharactersTypedCount = dataStore.getCharactersTypedCount()
+        if newCharactersTypedCount is 1
+            @lettersLabel.textContent = "#{newCharactersTypedCount} character typed today"
+        else
+            @lettersLabel.textContent = "#{newCharactersTypedCount} characters typed today"
+
         newKeyPressesCount = dataStore.getKeyPressesCount()
 
         @lettersCountData.push newCharactersTypedCount
@@ -199,5 +315,33 @@ class FitgitView
             @savesCount.textContent = "#{saveCount} save so far today"
         else
             @savesCount.textContent = "#{saveCount} saves so far today"
+
+    kickOffPomodoroTimer: ->
+        $(window).trigger({type: dataStore.SET_POMODORO_START_TIME})
+        @pomodoroButton.textContent = 'Stop pomodoro'
+        @pomodoroButton.onclick = @stopPomodoro
+        @pomodoroInterval = setInterval(@updatePomodoroTimer, @POMODORO_INTERVAL)
+
+    updatePomodoroTimer: =>
+        duration = dataStore.getPomodoroDuration()
+
+        if(@pomodoroTimer?.load)
+            minutes = ['minutes', duration]
+            @pomodoroTimer.load
+                columns: [minutes]
+
+        if duration >= @POMODORO_MAX_DURATION
+            alert('GO TAKE A BREAK')
+            clearInterval(@pomodoroInterval)
+            @pomodoroButton.textContent = 'Start pomodoro'
+            @pomodoroButton.onclick = @showPomodoroGague
+            $(window).trigger({type: dataStore.CLEAR_POMODORO_START_TIME})
+
+    stopPomodoro: =>
+        clearInterval(@pomodoroInterval)
+        $(window).trigger({type: dataStore.CLEAR_POMODORO_START_TIME})
+        @pomodoroButton.textContent = 'Start pomodoro'
+        @pomodoroButton.onclick = @showPomodoroGague
+
 
 module.exports = FitgitView
