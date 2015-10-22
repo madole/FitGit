@@ -1,7 +1,7 @@
 {
   "name": "fitgit",
   "main": "./lib/fitgit",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "A suite of metrics for your atom editor",
   "keywords": [],
   "activationCommands": {
