@@ -1,0 +1,19 @@
+{
+  "name": "fitgit",
+  "main": "./lib/fitgit",
+  "version": "0.0.0",
+  "description": "A short description of your package",
+  "keywords": [],
+  "activationCommands": {
+    "atom-workspace": "fitgit:toggle"
+  },
+  "repository": "https://github.com/atom/fitgit",
+  "license": "MIT",
+  "engines": {
+    "atom": ">=1.0.0 <2.0.0"
+  },
+  "dependencies": {
+    "jquery": "^2.1.4",
+    "moment": "^2.10.6"
+  }
+}
