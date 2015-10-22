@@ -36,6 +36,7 @@ module.exports = Fitgit =
       else
           @rightPanel.show()
           @fitgitView.showLettersChart()
+          @fitgitView.showClickScatterGraph()
 
 
   setUpEventListeners: ->
@@ -62,9 +63,10 @@ module.exports = Fitgit =
               @fitgitView.updateSaves()
 
       ### SET UP CLICKS LISTENER ###
-      $(workspaceView).on 'mouseup', (e) ->
+      $(workspaceView).on 'mouseup', (e) =>
           $(window).trigger
               type: dataStore.INCREMENT_MOUSE_CLICKS
               clickPos:
                   x: e.pageX
                   y: e.pageY
+          @fitgitView.updateClickScatterGraph()

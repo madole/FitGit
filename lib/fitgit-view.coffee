@@ -11,6 +11,11 @@ class FitgitView
         @element = document.createElement('div')
         @element.classList.add('fitgit')
 
+        @img = createDiv()
+        @img.classList.add('img__container', 'container')
+        @img.innerHTML = '<img src="http://i.imgur.com/FTmXGNR.png?2"/>'
+        @element.appendChild(@img)
+
         # Create Duration - You've been working for 25 minutes
         @durationContainer = createDiv()
         @durationContainer.classList.add('duration__container', 'container')
@@ -67,8 +72,23 @@ class FitgitView
 
         # Create Sactter graph
         @clickScatterGraphContainer = createDiv()
-        @clickScatterGraphContainer.classList.add('click-scatter-graph__container')
-        @element.appencChild(@clickScatterGraphContainer)
+        @clickScatterGraphContainer.classList.add('click-scatter-graph__container', 'container')
+        @element.appendChild(@clickScatterGraphContainer)
+
+        @clickScatterGraphLabel = createDiv()
+        @clickScatterGraphLabel.classList.add('click-scatter-graph__label', 'fitgit-text')
+        @clickScatterGraphLabel.textContent = 'No clicks so far'
+        @clickScatterGraphContainer.appendChild(@clickScatterGraphLabel)
+
+
+        @clickScatterGraph = createDiv()
+        @clickScatterGraph.id = 'click-scatter-graph'
+        @clickScatterGraph.classList.add('click-scatter-graph')
+        @clickScatterGraphContainer.appendChild(@clickScatterGraph)
+
+        @scatterGraphData1 = ['clicks_x']
+        @scatterGraphData2 = ['clicks']
+
 
     # Returns an object that can be retrieved when package is activated
     serialize: ->
@@ -80,6 +100,22 @@ class FitgitView
 
     getElement: ->
         @element
+
+
+    showClickScatterGraph: ->
+        @scatterGraph = c3.generate
+            bindto: '#click-scatter-graph'
+            size:
+                width: 500
+            padding:
+                top: 30
+                right: 30
+            data:
+                type: 'scatter'
+                columns: [
+                    @scatterGraphData1
+                    @scatterGraphData2
+                ]
 
     showLettersChart: ->
         @lettersChart = c3.generate
@@ -128,6 +164,27 @@ class FitgitView
                     @lettersCountData
                     @keypressesCountData
                 ]
+
+    updateClickScatterGraph: ->
+        xClicks = ['clicks_x']
+        yClicks = ['clicks']
+
+        newClicks = dataStore.getMouseClicks()
+        newClicks.forEach (click) ->
+            xClicks.push click.x
+            yClicks.push click.y
+
+        if(@scatterGraph?.load)
+            @scatterGraph.load
+                columns: [
+                    xClicks
+                    yClicks
+                ]
+        newClicksCount = newClicks.length
+        if newClicksCount is 1
+            @clickScatterGraphLabel.textContent = "#{newClicksCount} click so far"
+        else
+            @clickScatterGraphLabel.textContent = "#{newClicksCount} clicks so far today"
 
     updateDeletes: ->
         delCount = dataStore.getDeletesCount()
