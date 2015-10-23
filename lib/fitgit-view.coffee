@@ -184,21 +184,6 @@ class FitgitView
         @heatmapToggleButton.onclick = @setUpHeatMap
         @heatmapContainerWrapper.classList.add('hide')
         $(window).off dataStore.INCREMENT_MOUSE_CLICKS, @addToHeatmap
-        # @heatmapContainerWrapper.onmousemove = (e) ->
-        #     e.preventDefault();
-        #     x = e.layerX;
-        #     y = e.layerY;
-        #     if (e.touches)
-        #         x = e.touches[0].pageX;
-        #         y = e.touches[0].pageY;
-        #
-        #
-        #     heatmapInstance.addData({ x: x, y: y, value: 1 })
-        #
-        # @heatmapContainerWrapper.onclick = (e) ->
-        #     x = e.layerX;
-        #     y = e.layerY;
-        #     heatmapInstance.addData({ x: x, y: y, value: 1 });
 
 
     showPomodoroGague: =>
@@ -233,11 +218,18 @@ class FitgitView
                 top: 30
                 right: 30
             data:
+                x: 'clicks_x'
                 type: 'scatter'
                 columns: [
                     @scatterGraphData1
                     @scatterGraphData2
                 ]
+            axis:
+                x:
+                    label: 'X'
+                    fit: false
+                y:
+                    label: 'Y'
 
     showLettersChart: ->
         @lettersChart = c3.generate
@@ -249,6 +241,8 @@ class FitgitView
             padding:
                 top: 30
                 right: 30
+            xs:
+                x: 'click_x'
             color:
                 pattern: ['#d79b00', '#0d17f4' ]
             data:
@@ -258,20 +252,7 @@ class FitgitView
                     @keypressesCountData
                 ]
         i = 0
-        ###TODO: make sure to delete this###
-        # interval = setInterval ->
-        #     if i > 100 then clearInterval(interval)
-        #     data1.push Math.floor (Math.random() * 100) + 1
-        #     data2.push Math.floor (Math.random() * 200) + 1
-        #
-        #     chart.load
-        #         columns: [
-        #             data1
-        #             data2
-        #         ]
-        #
-        #     i++
-        # , 1000
+
 
     updateLettersChart: ->
         newCharactersTypedCount = dataStore.getCharactersTypedCount()
@@ -299,7 +280,7 @@ class FitgitView
         newClicks = dataStore.getMouseClicks()
         newClicks.forEach (click) ->
             xClicks.push click.x
-            yClicks.push click.y
+            yClicks.push -click.y
 
         if(@scatterGraph?.load)
             @scatterGraph.load
@@ -307,6 +288,11 @@ class FitgitView
                     xClicks
                     yClicks
                 ]
+            # @scatterGraph.load
+            #     data: newClicks
+            #     keys:
+            #         values: ['x', 'y']
+
         newClicksCount = newClicks.length
         if newClicksCount is 1
             @clickScatterGraphLabel.textContent = "#{newClicksCount} click so far"
